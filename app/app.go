@@ -86,6 +86,13 @@ import (
 	niflstarkeeper "github.com/ylgr/nifl-star/x/niflstar/keeper"
 	niflstartypes "github.com/ylgr/nifl-star/x/niflstar/types"
 	// this line is used by starport scaffolding # stargate/app/moduleImport
+	//"github.com/ylgr/nifl-star/x/ethermint"
+	//ethermintkeeper "github.com/ylgr/nifl-star/x/ethermint/keeper"
+	//etherminttypes "github.com/ylgr/nifl-star/x/ethermint/types"
+
+	ethermintcodec "github.com/cosmos/ethermint/codec"
+	ethermint "github.com/cosmos/ethermint/types"
+	"github.com/cosmos/ethermint/x/evm"
 )
 
 const Name = "niflstar"
@@ -105,6 +112,13 @@ func getGovProposalHandlers() []govclient.ProposalHandler {
 	)
 
 	return govProposalHandlers
+}
+
+func init() {
+	// set the address prefixes
+	config := sdk.GetConfig()
+	ethermint.SetBech32Prefixes(config)
+	ethermint.SetBip44CoinType(config)
 }
 
 var (
@@ -132,6 +146,7 @@ var (
 		transfer.AppModuleBasic{},
 		vesting.AppModuleBasic{},
 		niflstar.AppModuleBasic{},
+		evm.AppModuleBasic{},
 		// this line is used by starport scaffolding # stargate/app/moduleBasic
 	)
 
@@ -199,6 +214,8 @@ type App struct {
 	ScopedTransferKeeper capabilitykeeper.ScopedKeeper
 
 	niflstarKeeper niflstarkeeper.Keeper
+	EvmKeeper      *evm.Keeper
+
 	// this line is used by starport scaffolding # stargate/app/keeperDeclaration
 
 	// the module manager
@@ -215,10 +232,13 @@ func New(
 ) *App {
 
 	appCodec := encodingConfig.Marshaler
-	cdc := encodingConfig.Amino
+	//cdc := encodingConfig.Amino
+	cdc := ethermintcodec.MakeCodec(ModuleBasics)
+
 	interfaceRegistry := encodingConfig.InterfaceRegistry
 
-	bApp := baseapp.NewBaseApp(Name, logger, db, encodingConfig.TxConfig.TxDecoder(), baseAppOptions...)
+	//bApp := baseapp.NewBaseApp(Name, logger, db, encodingConfig.TxConfig.TxDecoder(), baseAppOptions...)
+	bApp := baseapp.NewBaseApp(Name, logger, db, evm.TxDecoder(cdc), baseAppOptions...)
 	bApp.SetCommitMultiStoreTracer(traceStore)
 	bApp.SetAppVersion(version.Version)
 	bApp.SetInterfaceRegistry(interfaceRegistry)
@@ -228,7 +248,7 @@ func New(
 		minttypes.StoreKey, distrtypes.StoreKey, slashingtypes.StoreKey,
 		govtypes.StoreKey, paramstypes.StoreKey, ibchost.StoreKey, upgradetypes.StoreKey,
 		evidencetypes.StoreKey, ibctransfertypes.StoreKey, capabilitytypes.StoreKey,
-		niflstartypes.StoreKey,
+		niflstartypes.StoreKey, evm.StoreKey,
 		// this line is used by starport scaffolding # stargate/app/storeKey
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
@@ -325,6 +345,10 @@ func New(
 
 	// this line is used by starport scaffolding # stargate/app/keeperDefinition
 
+	app.EvmKeeper = evm.NewKeeper(
+		app.cdc, keys[evm.StoreKey], app.GetSubspace(evm.ModuleName), app.AccountKeeper,
+	)
+
 	app.GovKeeper = govkeeper.NewKeeper(
 		appCodec, keys[govtypes.StoreKey], app.GetSubspace(govtypes.ModuleName), app.AccountKeeper, app.BankKeeper,
 		&stakingKeeper, govRouter,
@@ -366,6 +390,7 @@ func New(
 		params.NewAppModule(app.ParamsKeeper),
 		transferModule,
 		niflstar.NewAppModule(appCodec, app.niflstarKeeper),
+		evm.NewAppModule(app.EvmKeeper, app.AccountKeeper),
 		// this line is used by starport scaffolding # stargate/app/appModule
 	)
 
@@ -400,6 +425,7 @@ func New(
 		evidencetypes.ModuleName,
 		ibctransfertypes.ModuleName,
 		niflstartypes.ModuleName,
+		evm.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/initGenesis
 	)
 
@@ -583,6 +609,7 @@ func initParamsKeeper(appCodec codec.BinaryMarshaler, legacyAmino *codec.LegacyA
 	paramsKeeper.Subspace(ibctransfertypes.ModuleName)
 	paramsKeeper.Subspace(ibchost.ModuleName)
 	// this line is used by starport scaffolding # stargate/app/paramSubspace
+	paramsKeeper.Subspace(evm.ModuleName)
 
 	return paramsKeeper
 }
