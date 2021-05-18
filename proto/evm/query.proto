@@ -1,0 +1,39 @@
+syntax = "proto3";
+package ylgr.niflstar.evm;
+
+import "google/api/annotations.proto";
+import "cosmos/base/query/v1beta1/pagination.proto";
+// this line is used by starport scaffolding # 1
+import "evm/account.proto";
+
+option go_package = "github.com/ylgr/nifl-star/x/evm/types";
+
+// Query defines the gRPC querier service.
+service Query {
+    // this line is used by starport scaffolding # 2
+	rpc Account(QueryGetAccountRequest) returns (QueryGetAccountResponse) {
+		option (google.api.http).get = "/ylgr/niflstar/evm/account/{id}";
+	}
+	rpc AccountAll(QueryAllAccountRequest) returns (QueryAllAccountResponse) {
+		option (google.api.http).get = "/ylgr/niflstar/evm/account";
+	}
+
+}
+
+// this line is used by starport scaffolding # 3
+message QueryGetAccountRequest {
+	uint64 id = 1;
+}
+
+message QueryGetAccountResponse {
+	Account Account = 1;
+}
+
+message QueryAllAccountRequest {
+	cosmos.base.query.v1beta1.PageRequest pagination = 1;
+}
+
+message QueryAllAccountResponse {
+	repeated Account Account = 1;
+	cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}

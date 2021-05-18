@@ -1,0 +1,12 @@
+syntax = "proto3";
+package ylgr.niflstar.evm;
+
+option go_package = "github.com/ylgr/nifl-star/x/evm/types";
+
+import "gogoproto/gogo.proto";
+
+message Account {
+  string creator = 1;
+  uint64 id = 2;
+  string codeHash = 3; 
+}

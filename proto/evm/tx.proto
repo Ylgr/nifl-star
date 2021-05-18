@@ -1,0 +1,39 @@
+syntax = "proto3";
+package ylgr.niflstar.evm;
+
+// this line is used by starport scaffolding # proto/tx/import
+
+option go_package = "github.com/ylgr/nifl-star/x/evm/types";
+
+// Msg defines the Msg service.
+service Msg {
+    // this line is used by starport scaffolding # proto/tx/rpc
+  rpc CreateAccount(MsgCreateAccount) returns (MsgCreateAccountResponse);
+  rpc UpdateAccount(MsgUpdateAccount) returns (MsgUpdateAccountResponse);
+  rpc DeleteAccount(MsgDeleteAccount) returns (MsgDeleteAccountResponse);
+}
+
+// this line is used by starport scaffolding # proto/tx/message
+message MsgCreateAccount {
+  string creator = 1;
+  string codeHash = 2;
+}
+
+message MsgCreateAccountResponse {
+  uint64 id = 1;
+}
+
+message MsgUpdateAccount {
+  string creator = 1;
+  uint64 id = 2;
+  string codeHash = 3;
+}
+
+message MsgUpdateAccountResponse { }
+
+message MsgDeleteAccount {
+  string creator = 1;
+  uint64 id = 2;
+}
+
+message MsgDeleteAccountResponse { }

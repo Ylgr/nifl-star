@@ -1,0 +1,14 @@
+syntax = "proto3";
+package ylgr.niflstar.evm;
+
+// this line is used by starport scaffolding # genesis/proto/import
+import "evm/account.proto";
+
+option go_package = "github.com/ylgr/nifl-star/x/evm/types";
+
+// GenesisState defines the evm module's genesis state.
+message GenesisState {
+    // this line is used by starport scaffolding # genesis/proto/state
+		repeated Account accountList = 1; // this line is used by starport scaffolding # genesis/proto/stateField
+    // this line is used by starport scaffolding # ibc/genesis/proto
+}

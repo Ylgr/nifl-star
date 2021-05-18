@@ -86,6 +86,9 @@ import (
 	niflstarkeeper "github.com/ylgr/nifl-star/x/niflstar/keeper"
 	niflstartypes "github.com/ylgr/nifl-star/x/niflstar/types"
 	// this line is used by starport scaffolding # stargate/app/moduleImport
+	"github.com/ylgr/nifl-star/x/evm"
+	evmkeeper "github.com/ylgr/nifl-star/x/evm/keeper"
+	evmtypes "github.com/ylgr/nifl-star/x/evm/types"
 )
 
 const Name = "niflstar"
@@ -133,6 +136,7 @@ var (
 		vesting.AppModuleBasic{},
 		niflstar.AppModuleBasic{},
 		// this line is used by starport scaffolding # stargate/app/moduleBasic
+		evm.AppModuleBasic{},
 	)
 
 	// module account permissions
@@ -201,6 +205,8 @@ type App struct {
 	niflstarKeeper niflstarkeeper.Keeper
 	// this line is used by starport scaffolding # stargate/app/keeperDeclaration
 
+	evmKeeper evmkeeper.Keeper
+
 	// the module manager
 	mm *module.Manager
 }
@@ -230,6 +236,7 @@ func New(
 		evidencetypes.StoreKey, ibctransfertypes.StoreKey, capabilitytypes.StoreKey,
 		niflstartypes.StoreKey,
 		// this line is used by starport scaffolding # stargate/app/storeKey
+		evmtypes.StoreKey,
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
 	memKeys := sdk.NewMemoryStoreKeys(capabilitytypes.MemStoreKey)
@@ -325,6 +332,13 @@ func New(
 
 	// this line is used by starport scaffolding # stargate/app/keeperDefinition
 
+	app.evmKeeper = *evmkeeper.NewKeeper(
+		appCodec,
+		keys[evmtypes.StoreKey],
+		keys[evmtypes.MemStoreKey],
+	)
+	evmModule := evm.NewAppModule(appCodec, app.evmKeeper)
+
 	app.GovKeeper = govkeeper.NewKeeper(
 		appCodec, keys[govtypes.StoreKey], app.GetSubspace(govtypes.ModuleName), app.AccountKeeper, app.BankKeeper,
 		&stakingKeeper, govRouter,
@@ -367,6 +381,7 @@ func New(
 		transferModule,
 		niflstar.NewAppModule(appCodec, app.niflstarKeeper),
 		// this line is used by starport scaffolding # stargate/app/appModule
+		evmModule,
 	)
 
 	// During begin block slashing happens after distr.BeginBlocker so that
@@ -401,6 +416,7 @@ func New(
 		ibctransfertypes.ModuleName,
 		niflstartypes.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/initGenesis
+		evmtypes.ModuleName,
 	)
 
 	app.mm.RegisterInvariants(&app.CrisisKeeper)
@@ -583,6 +599,7 @@ func initParamsKeeper(appCodec codec.BinaryMarshaler, legacyAmino *codec.LegacyA
 	paramsKeeper.Subspace(ibctransfertypes.ModuleName)
 	paramsKeeper.Subspace(ibchost.ModuleName)
 	// this line is used by starport scaffolding # stargate/app/paramSubspace
+	paramsKeeper.Subspace(evmtypes.ModuleName)
 
 	return paramsKeeper
 }
