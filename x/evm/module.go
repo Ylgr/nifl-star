@@ -1,9 +1,9 @@
 package evm
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
-	// this line is used by starport scaffolding # 1
 
 	"github.com/gorilla/mux"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
@@ -13,155 +13,148 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
-	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
+
 	"github.com/ylgr/nifl-star/x/evm/client/cli"
-	"github.com/ylgr/nifl-star/x/evm/client/rest"
 	"github.com/ylgr/nifl-star/x/evm/keeper"
 	"github.com/ylgr/nifl-star/x/evm/types"
-	// this line is used by starport scaffolding # ibc/module/import
 )
 
 var (
 	_ module.AppModule      = AppModule{}
 	_ module.AppModuleBasic = AppModuleBasic{}
-	// this line is used by starport scaffolding # ibc/module/interface
 )
 
-// ----------------------------------------------------------------------------
-// AppModuleBasic
-// ----------------------------------------------------------------------------
+// AppModuleBasic defines the basic application module used by the evm module.
+type AppModuleBasic struct{}
 
-// AppModuleBasic implements the AppModuleBasic interface for the capability module.
-type AppModuleBasic struct {
-	cdc codec.Marshaler
-}
-
-func NewAppModuleBasic(cdc codec.Marshaler) AppModuleBasic {
-	return AppModuleBasic{cdc: cdc}
-}
-
-// Name returns the capability module's name.
+// Name returns the evm module's name.
 func (AppModuleBasic) Name() string {
 	return types.ModuleName
 }
 
-func (AppModuleBasic) RegisterCodec(cdc *codec.LegacyAmino) {
-	types.RegisterCodec(cdc)
+// RegisterLegacyAminoCodec performs a no-op as the evm module doesn't support amino.
+func (AppModuleBasic) RegisterLegacyAminoCodec(_ *codec.LegacyAmino) {
 }
 
-func (AppModuleBasic) RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
-	types.RegisterCodec(cdc)
-}
-
-// RegisterInterfaces registers the module's interface types
-func (a AppModuleBasic) RegisterInterfaces(reg cdctypes.InterfaceRegistry) {
-	types.RegisterInterfaces(reg)
-}
-
-// DefaultGenesis returns the capability module's default genesis state.
+// DefaultGenesis returns default genesis state as raw bytes for the evm
+// module.
 func (AppModuleBasic) DefaultGenesis(cdc codec.JSONMarshaler) json.RawMessage {
-	return cdc.MustMarshalJSON(types.DefaultGenesis())
+	return cdc.MustMarshalJSON(types.DefaultGenesisState())
 }
 
-// ValidateGenesis performs genesis state validation for the capability module.
-func (AppModuleBasic) ValidateGenesis(cdc codec.JSONMarshaler, config client.TxEncodingConfig, bz json.RawMessage) error {
-	var genState types.GenesisState
-	if err := cdc.UnmarshalJSON(bz, &genState); err != nil {
+// ValidateGenesis is the validation check of the Genesis
+func (AppModuleBasic) ValidateGenesis(cdc codec.JSONMarshaler, _ client.TxEncodingConfig, bz json.RawMessage) error {
+	var genesisState types.GenesisState
+	if err := cdc.UnmarshalJSON(bz, &genesisState); err != nil {
 		return fmt.Errorf("failed to unmarshal %s genesis state: %w", types.ModuleName, err)
 	}
-	return genState.Validate()
+
+	return genesisState.Validate()
 }
 
-// RegisterRESTRoutes registers the capability module's REST service handlers.
-func (AppModuleBasic) RegisterRESTRoutes(clientCtx client.Context, rtr *mux.Router) {
-	rest.RegisterRoutes(clientCtx, rtr)
+// RegisterRESTRoutes performs a no-op as the EVM module doesn't expose REST
+// endpoints
+func (AppModuleBasic) RegisterRESTRoutes(_ client.Context, _ *mux.Router) {
 }
 
-// RegisterGRPCGatewayRoutes registers the gRPC Gateway routes for the module.
+// RegisterGRPCGatewayRoutes registers the gRPC Gateway routes for the evm module.
 func (AppModuleBasic) RegisterGRPCGatewayRoutes(clientCtx client.Context, mux *runtime.ServeMux) {
-	// this line is used by starport scaffolding # 2
-}
-
-// GetTxCmd returns the capability module's root tx command.
-func (a AppModuleBasic) GetTxCmd() *cobra.Command {
-	return cli.GetTxCmd()
-}
-
-// GetQueryCmd returns the capability module's root query command.
-func (AppModuleBasic) GetQueryCmd() *cobra.Command {
-	return cli.GetQueryCmd(types.StoreKey)
-}
-
-// ----------------------------------------------------------------------------
-// AppModule
-// ----------------------------------------------------------------------------
-
-// AppModule implements the AppModule interface for the capability module.
-type AppModule struct {
-	AppModuleBasic
-
-	keeper keeper.Keeper
-}
-
-func NewAppModule(cdc codec.Marshaler, keeper keeper.Keeper) AppModule {
-	return AppModule{
-		AppModuleBasic: NewAppModuleBasic(cdc),
-		keeper:         keeper,
+	if err := types.RegisterQueryHandlerClient(context.Background(), mux, types.NewQueryClient(clientCtx)); err != nil {
+		panic(err)
 	}
 }
 
-// Name returns the capability module's name.
-func (am AppModule) Name() string {
-	return am.AppModuleBasic.Name()
+// GetTxCmd returns nil as the evm module doesn't support transactions through the CLI.
+func (AppModuleBasic) GetTxCmd() *cobra.Command {
+	return nil
 }
 
-// Route returns the capability module's message routing key.
-func (am AppModule) Route() sdk.Route {
-	return sdk.NewRoute(types.RouterKey, NewHandler(am.keeper))
+// GetQueryCmd returns no root query command for the evm module.
+func (AppModuleBasic) GetQueryCmd() *cobra.Command {
+	return cli.GetQueryCmd()
 }
 
-// QuerierRoute returns the capability module's query routing key.
-func (AppModule) QuerierRoute() string { return types.QuerierRoute }
-
-// LegacyQuerierHandler returns the capability module's Querier.
-func (am AppModule) LegacyQuerierHandler(legacyQuerierCdc *codec.LegacyAmino) sdk.Querier {
-	return keeper.NewQuerier(am.keeper, legacyQuerierCdc)
+// RegisterInterfaces registers interfaces and implementations of the evm module.
+func (AppModuleBasic) RegisterInterfaces(registry codectypes.InterfaceRegistry) {
+	types.RegisterInterfaces(registry)
 }
 
-// RegisterServices registers a GRPC query service to respond to the
-// module-specific GRPC queries.
+// ____________________________________________________________________________
+
+// AppModule implements an application module for the evm module.
+type AppModule struct {
+	AppModuleBasic
+	keeper *keeper.Keeper
+	ak     types.AccountKeeper
+	bk     types.BankKeeper
+}
+
+// NewAppModule creates a new AppModule object
+func NewAppModule(k *keeper.Keeper, ak types.AccountKeeper, bk types.BankKeeper) AppModule {
+	return AppModule{
+		AppModuleBasic: AppModuleBasic{},
+		keeper:         k,
+		ak:             ak,
+		bk:             bk,
+	}
+}
+
+// Name returns the evm module's name.
+func (AppModule) Name() string {
+	return types.ModuleName
+}
+
+// RegisterInvariants interface for registering invariants
+func (am AppModule) RegisterInvariants(ir sdk.InvariantRegistry) {
+	keeper.RegisterInvariants(ir, *am.keeper)
+}
+
+// RegisterServices registers the evm module Msg and gRPC services.
 func (am AppModule) RegisterServices(cfg module.Configurator) {
+	types.RegisterMsgServer(cfg.MsgServer(), am.keeper)
 	types.RegisterQueryServer(cfg.QueryServer(), am.keeper)
 }
 
-// RegisterInvariants registers the capability module's invariants.
-func (am AppModule) RegisterInvariants(_ sdk.InvariantRegistry) {}
+// Route returns the message routing key for the evm module.
+func (am AppModule) Route() sdk.Route {
+	return sdk.NewRoute(types.RouterKey, NewHandler(*am.keeper))
+}
 
-// InitGenesis performs the capability module's genesis initialization It returns
+// QuerierRoute returns the evm module's querier route name.
+func (AppModule) QuerierRoute() string { return types.RouterKey }
+
+// LegacyQuerierHandler returns nil as the evm module doesn't expose a legacy
+// Querier.
+func (am AppModule) LegacyQuerierHandler(legacyQuerierCdc *codec.LegacyAmino) sdk.Querier {
+	return nil
+}
+
+// BeginBlock returns the begin block for the evm module.
+func (am AppModule) BeginBlock(ctx sdk.Context, req abci.RequestBeginBlock) {
+	am.keeper.BeginBlock(ctx, req)
+}
+
+// EndBlock returns the end blocker for the evm module. It returns no validator
+// updates.
+func (am AppModule) EndBlock(ctx sdk.Context, req abci.RequestEndBlock) []abci.ValidatorUpdate {
+	return am.keeper.EndBlock(ctx, req)
+}
+
+// InitGenesis performs genesis initialization for the evm module. It returns
 // no validator updates.
-func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONMarshaler, gs json.RawMessage) []abci.ValidatorUpdate {
-	var genState types.GenesisState
-	// Initialize global index to index in genesis state
-	cdc.MustUnmarshalJSON(gs, &genState)
+func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONMarshaler, data json.RawMessage) []abci.ValidatorUpdate {
+	var genesisState types.GenesisState
 
-	InitGenesis(ctx, am.keeper, genState)
-
-	return []abci.ValidatorUpdate{}
+	cdc.MustUnmarshalJSON(data, &genesisState)
+	return InitGenesis(ctx, *am.keeper, am.ak, am.bk, genesisState)
 }
 
-// ExportGenesis returns the capability module's exported genesis state as raw JSON bytes.
+// ExportGenesis returns the exported genesis state as raw bytes for the evm
+// module.
 func (am AppModule) ExportGenesis(ctx sdk.Context, cdc codec.JSONMarshaler) json.RawMessage {
-	genState := ExportGenesis(ctx, am.keeper)
-	return cdc.MustMarshalJSON(genState)
-}
-
-// BeginBlock executes all ABCI BeginBlock logic respective to the capability module.
-func (am AppModule) BeginBlock(_ sdk.Context, _ abci.RequestBeginBlock) {}
-
-// EndBlock executes all ABCI EndBlock logic respective to the capability module. It
-// returns no validator updates.
-func (am AppModule) EndBlock(_ sdk.Context, _ abci.RequestEndBlock) []abci.ValidatorUpdate {
-	return []abci.ValidatorUpdate{}
+	gs := ExportGenesis(ctx, *am.keeper, am.ak)
+	return cdc.MustMarshalJSON(gs)
 }

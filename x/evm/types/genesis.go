@@ -1,27 +1,66 @@
 package types
 
 import (
-// this line is used by starport scaffolding # genesis/types/import
-// this line is used by starport scaffolding # ibc/genesistype/import
+	"errors"
+	"fmt"
+
+	ethcmn "github.com/ethereum/go-ethereum/common"
+	ethermint "github.com/ylgr/nifl-star/types"
 )
 
-// DefaultIndex is the default capability global index
-const DefaultIndex uint64 = 1
+// Validate performs a basic validation of a GenesisAccount fields.
+func (ga GenesisAccount) Validate() error {
+	if ethermint.IsZeroAddress(ga.Address) {
+		return fmt.Errorf("address cannot be the zero address %s", ga.Address)
+	}
+	if len(ethcmn.Hex2Bytes(ga.Code)) == 0 {
+		return errors.New("code cannot be empty")
+	}
 
-// DefaultGenesis returns the default Capability genesis state
-func DefaultGenesis() *GenesisState {
+	return ga.Storage.Validate()
+}
+
+// DefaultGenesisState sets default evm genesis state with empty accounts and default params and
+// chain config values.
+func DefaultGenesisState() *GenesisState {
 	return &GenesisState{
-		// this line is used by starport scaffolding # ibc/genesistype/default
-		// this line is used by starport scaffolding # genesis/types/default
+		Accounts:    []GenesisAccount{},
+		TxsLogs:     []TransactionLogs{},
+		ChainConfig: DefaultChainConfig(),
+		Params:      DefaultParams(),
 	}
 }
 
 // Validate performs basic genesis state validation returning an error upon any
 // failure.
 func (gs GenesisState) Validate() error {
-	// this line is used by starport scaffolding # ibc/genesistype/validate
+	seenAccounts := make(map[string]bool)
+	seenTxs := make(map[string]bool)
+	for _, acc := range gs.Accounts {
+		if seenAccounts[acc.Address] {
+			return fmt.Errorf("duplicated genesis account %s", acc.Address)
+		}
+		if err := acc.Validate(); err != nil {
+			return fmt.Errorf("invalid genesis account %s: %w", acc.Address, err)
+		}
+		seenAccounts[acc.Address] = true
+	}
 
-	// this line is used by starport scaffolding # genesis/types/validate
+	for _, tx := range gs.TxsLogs {
+		if seenTxs[tx.Hash] {
+			return fmt.Errorf("duplicated logs from transaction %s", tx.Hash)
+		}
 
-	return nil
+		if err := tx.Validate(); err != nil {
+			return fmt.Errorf("invalid logs from transaction %s: %w", tx.Hash, err)
+		}
+
+		seenTxs[tx.Hash] = true
+	}
+
+	if err := gs.ChainConfig.Validate(); err != nil {
+		return err
+	}
+
+	return gs.Params.Validate()
 }
