@@ -1,11 +1,11 @@
 import { txClient, queryClient } from './module';
 // @ts-ignore
 import { SpVuexError } from '@starport/vuex';
-import { GenesisAccount } from "./module/types/ethermint/evm/v1alpha1/genesis";
 import { TxData } from "./module/types/ethermint/evm/v1alpha1/tx";
 import { Recipient } from "./module/types/ethermint/evm/v1alpha1/tx";
 import { SigCache } from "./module/types/ethermint/evm/v1alpha1/tx";
 import { EIP155Signer } from "./module/types/ethermint/evm/v1alpha1/tx";
+import { GenesisAccount } from "./module/types/ethermint/evm/v1alpha1/genesis";
 import { Params } from "./module/types/ethermint/evm/v1alpha1/evm";
 import { ChainConfig } from "./module/types/ethermint/evm/v1alpha1/evm";
 import { State } from "./module/types/ethermint/evm/v1alpha1/evm";
@@ -42,11 +42,11 @@ const getDefaultState = () => {
         BlockBloom: {},
         Params: {},
         _Structure: {
-            GenesisAccount: getStructure(GenesisAccount.fromPartial({})),
             TxData: getStructure(TxData.fromPartial({})),
             Recipient: getStructure(Recipient.fromPartial({})),
             SigCache: getStructure(SigCache.fromPartial({})),
             EIP155Signer: getStructure(EIP155Signer.fromPartial({})),
+            GenesisAccount: getStructure(GenesisAccount.fromPartial({})),
             Params: getStructure(Params.fromPartial({})),
             ChainConfig: getStructure(ChainConfig.fromPartial({})),
             State: getStructure(State.fromPartial({})),

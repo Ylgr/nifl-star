@@ -80,7 +80,8 @@ import (
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 	tmjson "github.com/tendermint/tendermint/libs/json"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
-	appparams "github.com/ylgr/nifl-star/app/params"
+	//appparams "github.com/ylgr/nifl-star/app/params"
+	simappparams "github.com/cosmos/cosmos-sdk/simapp/params"
 	"github.com/ylgr/nifl-star/x/niflstar"
 	niflstarkeeper "github.com/ylgr/nifl-star/x/niflstar/keeper"
 	niflstartypes "github.com/ylgr/nifl-star/x/niflstar/types"
@@ -227,7 +228,7 @@ type App struct {
 // NewSimApp returns a reference to an initialized SimApp.
 func New(
 	logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest bool, skipUpgradeHeights map[int64]bool,
-	homePath string, invCheckPeriod uint, encodingConfig appparams.EncodingConfig,
+	homePath string, invCheckPeriod uint, encodingConfig simappparams.EncodingConfig,
 	// this line is used by starport scaffolding # stargate/app/newArgument
 	appOpts servertypes.AppOptions, baseAppOptions ...func(*baseapp.BaseApp),
 ) *App {
