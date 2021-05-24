@@ -129,7 +129,7 @@ func InitTestnet(
 ) error {
 
 	if chainID == "" {
-		chainID = fmt.Sprintf("ethermint-%d", tmrand.Int63n(9999999999999)+1)
+		chainID = fmt.Sprintf("niflstar-%d", tmrand.Int63n(9999999999999)+1)
 	}
 
 	if !ethermint.IsValidChainID(chainID) {

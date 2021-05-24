@@ -49,11 +49,11 @@ func ValidateChainID(baseCmd *cobra.Command) *cobra.Command {
 
 	// Function to replace command's RunE function
 	validateFn := func(cmd *cobra.Command, args []string) error {
-		chainID, _ := cmd.Flags().GetString(flags.FlagChainID)
+		//chainID, _ := cmd.Flags().GetString(flags.FlagChainID)
 
-		if !ethermint.IsValidChainID(chainID) {
-			return fmt.Errorf("invalid chain-id format: %s", chainID)
-		}
+		//if !ethermint.IsValidChainID(chainID) {
+		//	return fmt.Errorf("invalid chain-id format: %s", chainID)
+		//}
 
 		return baseRunE(cmd, args)
 	}
@@ -71,7 +71,7 @@ func GenerateChainID(baseCmd *cobra.Command) *cobra.Command {
 	// Function to replace command's RunE function
 	generateFn := func(cmd *cobra.Command, args []string) error {
 		chainID, _ := cmd.Flags().GetString(flags.FlagChainID)
-
+		chainID = ""
 		if chainID == "" {
 			if err := cmd.Flags().Set(flags.FlagChainID, ethermint.GenerateRandomChainID()); err != nil {
 				return fmt.Errorf("could not set random chain-id: %v", err)
